@@ -1,6 +1,6 @@
 package com.l7r7.lab.http4s.multipart
 
-import cats.effect.{ExitCode, IO, IOApp, Sync}
+import cats.effect.{ExitCode, IO, IOApp}
 import fs2.{Pipe, Stream}
 import org.http4s.Method.GET
 import org.http4s.client.Client
@@ -8,7 +8,7 @@ import org.http4s.client.blaze._
 import org.http4s.client.middleware.Logger
 import org.http4s.headers.`Content-Type`
 import org.http4s.multipart.{Boundary, MultipartParser, Part}
-import org.http4s.{Headers, HttpApp, Request, Response, Uri}
+import org.http4s._
 
 import scala.concurrent.ExecutionContext
 
@@ -53,14 +53,9 @@ object ClientApp extends IOApp {
   }
 
   def findBoundary(headers: Headers): Option[Boundary] =
-    headers.find(_.is(`Content-Type`))
-      .map(_.value)
-      .flatMap { s =>
-        s.split(";")
-          .map(_.trim)
-          .find(_.startsWith("boundary="))
-          .map(_.replace("boundary=", "").replace("\"", ""))
-      }
+    headers
+      .find(_.is(`Content-Type`))
+      .map(_.parsed.asInstanceOf[`Content-Type`])
+      .flatMap(_.mediaType.extensions.get("boundary"))
       .map(Boundary(_))
-
 }
