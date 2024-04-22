@@ -36,13 +36,13 @@ object ClientApp extends IOApp {
       .through(responseToParts)
 
   val createRequest: Request[IO] =
-    Request[IO](GET, Uri.unsafeFromString(s"http://localhost:8080/test-endpoint/latest"))
+    Request[IO](GET, Uri.unsafeFromString(s"http://localhost:8080/test-endpoint/15037"))
 
   def doRequest(implicit httpApp: HttpApp[IO]): Pipe[IO, Request[IO], Response[IO]] =
     _.evalMap { request =>
       for {
         response <- httpApp.run(request)
-        _ <- response.body.compile.drain
+//        _ <- response.body.compile.drain
       } yield response
     }
 
@@ -53,12 +53,9 @@ object ClientApp extends IOApp {
     }
   }
 
-  def findBoundary(headers: Headers): Option[Boundary] =
-    headers.headers
-      .filter(raw => raw.name == CIString("Content-Type"))
-      .map(raw => `Content-Type`.parse(raw.value))
-      .flatMap(_.toOption)
-      .headOption
-      .flatMap(_.mediaType.extensions.get("boundary"))
-      .map(Boundary(_))
+def findBoundary(headers: Headers): Option[Boundary] =
+  headers
+    .get[`Content-Type`]
+    .flatMap(_.mediaType.extensions.get("boundary"))
+    .map(Boundary(_))
 }
